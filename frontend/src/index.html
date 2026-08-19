@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amanati</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/htmx.min.js"></script>
+  <script defer src="/assets/alpine.min.js"></script>
+</head>
+<body class="h-full overflow-hidden bg-zinc-950 text-zinc-100 antialiased">
+
+  <div class="flex h-full flex-col">
+
+    <!-- Title bar -->
+    <header class="flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-900/60 px-4 py-2">
+      <span class="text-sm font-semibold tracking-tight text-zinc-100">Amanati</span>
+      <span class="text-xs text-zinc-600">API client</span>
+
+      <div class="ml-auto flex items-center gap-2" x-data>
+        <button type="button" @click="importFile()"
+                class="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">
+          Import Postman file…
+        </button>
+        <button type="button" @click="importDirectory()"
+                class="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">
+          Open Bruno folder…
+        </button>
+        <button type="button"
+                class="rounded-md bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-700"
+                hx-get="/api/blank" hx-target="#editor-pane" hx-swap="innerHTML">
+          New request
+        </button>
+      </div>
+    </header>
+
+    <div class="flex min-h-0 flex-1">
+
+      <!-- Collections -->
+      <aside class="flex w-72 shrink-0 flex-col border-r border-zinc-800 bg-zinc-900/40">
+        <div id="sidebar" class="min-h-0 flex-1 overflow-auto"
+             hx-get="/api/sidebar" hx-trigger="load, collections:changed from:body"
+             hx-swap="innerHTML"></div>
+      </aside>
+
+      <!-- Request / response -->
+      <main class="flex min-w-0 flex-1 flex-col">
+        <section id="editor-pane" class="min-h-0 flex-[3] overflow-hidden"
+                 hx-get="/api/blank" hx-trigger="load" hx-swap="innerHTML"></section>
+
+        <section id="response-pane" class="min-h-0 flex-[2] overflow-hidden border-t border-zinc-800 bg-zinc-900/30">
+          <div class="flex h-full items-center justify-center text-xs text-zinc-600">
+            Send a request to see the response
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div x-data="toast" x-show="message" x-transition
+       class="fixed bottom-4 right-4 max-w-sm rounded-md border px-3 py-2 text-xs shadow-lg"
+       :class="tone === 'error' ? 'border-rose-500/40 bg-rose-950 text-rose-200' : 'border-emerald-500/40 bg-emerald-950 text-emerald-200'"
+       style="display: none">
+    <span x-text="message"></span>
+  </div>
+
+  <script>
+    // --- Wails bindings -----------------------------------------------------
+    // The only things that need native code are the file dialogs; everything
+    // else in the UI is HTMX talking to the Go fragment server over /api.
+
+    function notify(message, tone) {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message, tone } }));
+    }
+
+    async function runImport(binding) {
+      const app = window.go && window.go.main && window.go.main.App;
+      if (!app) {
+        notify('Native bindings are not ready yet.', 'error');
+        return;
+      }
+      try {
+        const result = await app[binding]();
+        if (result.ok) {
+          htmx.trigger(document.body, 'collections:changed');
+          notify('Imported ' + result.message, 'ok');
+        } else if (result.message) {
+          notify(result.message, 'error');
+        }
+      } catch (err) {
+        notify(String(err), 'error');
+      }
+    }
+
+    const importFile = () => runImport('ImportFile');
+    const importDirectory = () => runImport('ImportDirectory');
+
+    // --- Alpine components --------------------------------------------------
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('ui', { active: null });
+
+      Alpine.data('toast', () => ({
+        message: '',
+        tone: 'ok',
+        timer: null,
+        init() {
+          window.addEventListener('toast', (event) => {
+            this.message = event.detail.message;
+            this.tone = event.detail.tone;
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => { this.message = ''; }, 4000);
+          });
+        },
+      }));
+    });
+
+    // Backs the request editor fragment. The server hands it its initial state
+    // as JSON so the markup stays free of interpolated values.
+    function requestEditor() {
+      const node = document.getElementById('editor-data');
+      const data = JSON.parse(node.dataset.state);
+
+      return {
+        ...data,
+        tab: 'params',
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+        tabs: [
+          { id: 'params', label: 'Query' },
+          { id: 'headers', label: 'Headers' },
+          { id: 'body', label: 'Body' },
+          { id: 'auth', label: 'Auth' },
+        ],
+        count(id) {
+          switch (id) {
+            case 'params': return this.params.filter((r) => r.enabled && r.key).length;
+            case 'headers': return this.headers.filter((r) => r.enabled && r.key).length;
+            case 'body': return this.body.mode === 'none' ? 0 : 1;
+            case 'auth': return this.auth.type === 'none' ? 0 : 1;
+            default: return 0;
+          }
+        },
+      };
+    }
+
+    // Surface transport-level failures that never reach a template.
+    document.body.addEventListener('htmx:responseError', (event) => {
+      notify('Request failed: ' + event.detail.xhr.status, 'error');
+    });
+    document.body.addEventListener('htmx:sendError', () => {
+      notify('Could not reach the local fragment server.', 'error');
+    });
+  </script>
+</body>
+</html>

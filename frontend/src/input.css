@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Tailwind v4 scans sources relative to this file. The markup lives in two
+   places: the static shell here, and the Go fragment templates. */
+@source "./index.html";
+@source "../../internal/ui/templates";
+
+/* Method colours are chosen in Go (ui.methodTone), so the scanner never sees
+   these class names in markup. Keep this in sync with that function. */
+@source inline("text-{emerald,amber,sky,rose,zinc}-400");
+
+@layer base {
+  [x-cloak] {
+    display: none !important;
+  }
+
+  /* htmx toggles .htmx-request on the element named by hx-indicator. */
+  .htmx-indicator {
+    display: none;
+  }
+  .htmx-indicator.htmx-request {
+    display: inline-block;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-zinc-700);
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-zinc-600);
+    background-clip: content-box;
+  }
+
+  /* Wails window: never let the shell itself scroll. */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+}

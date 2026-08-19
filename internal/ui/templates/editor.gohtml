@@ -1,0 +1,182 @@
+{{- define "editor.gohtml" -}}
+{{/* Initial editor state for Alpine; read back via dataset in requestEditor(). */}}
+<div id="editor-data" hidden data-state="{{ json . }}"></div>
+
+<form class="flex h-full min-h-0 flex-col" x-data="requestEditor()"
+      @keydown.window.ctrl.enter.prevent="$el.requestSubmit()"
+      hx-post="/api/send" hx-target="#response-pane" hx-swap="innerHTML"
+      hx-indicator="#send-indicator" hx-disabled-elt="#send-button">
+
+  <input type="hidden" name="collection-id" :value="collectionId">
+  <input type="hidden" name="request-id" :value="requestId">
+
+  <header class="flex items-center gap-3 border-b border-zinc-800 px-4 py-2.5">
+    <h2 class="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200" x-text="name"></h2>
+    <template x-if="collectionName">
+      <span class="shrink-0 text-xs text-zinc-500" x-text="collectionName"></span>
+    </template>
+    <template x-if="envs.length">
+      <select name="env" x-model="env"
+              class="shrink-0 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-300 focus:border-sky-500 focus:outline-none">
+        <template x-for="option in envs" :key="option">
+          <option :value="option" x-text="option"></option>
+        </template>
+      </select>
+    </template>
+  </header>
+
+  <div class="flex items-center gap-2 px-4 py-3">
+    <select name="method" x-model="method"
+            class="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm font-semibold text-zinc-200 focus:border-sky-500 focus:outline-none">
+      <template x-for="verb in methods" :key="verb">
+        <option :value="verb" x-text="verb"></option>
+      </template>
+    </select>
+
+    <input type="text" name="url" x-model="url" spellcheck="false"
+           placeholder="https://api.example.com/users  or  {{ "{{baseUrl}}" }}/users"
+           class="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none">
+
+    <button type="submit" id="send-button"
+            class="flex shrink-0 items-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-60">
+      <svg id="send-indicator" class="htmx-indicator size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
+        <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Send
+    </button>
+  </div>
+
+  <nav class="flex gap-1 border-b border-zinc-800 px-4">
+    <template x-for="item in tabs" :key="item.id">
+      <button type="button" @click="tab = item.id"
+              class="relative -mb-px border-b-2 px-3 py-2 text-xs font-medium"
+              :class="tab === item.id ? 'border-sky-500 text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-300'">
+        <span x-text="item.label"></span>
+        <span x-show="count(item.id)" class="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400" x-text="count(item.id)"></span>
+      </button>
+    </template>
+  </nav>
+
+  <div class="min-h-0 flex-1 overflow-auto px-4 py-3">
+    <div x-show="tab === 'params'">
+      {{- template "kvrows" (rows "param" "params" "Query parameter") }}
+    </div>
+
+    <div x-show="tab === 'headers'">
+      {{- template "kvrows" (rows "header" "headers" "Header") }}
+    </div>
+
+    <div x-show="tab === 'body'" class="space-y-3">
+      <div class="flex items-center gap-2">
+        <select name="body-mode" x-model="body.mode"
+                class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+          <option value="none">No body</option>
+          <option value="raw">Raw</option>
+          <option value="form-urlencoded">Form URL encoded</option>
+          <option value="multipart-form">Multipart form</option>
+        </select>
+        <select name="body-type" x-model="body.type" x-show="body.mode === 'raw'"
+                class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+          <option value="application/json">application/json</option>
+          <option value="application/xml">application/xml</option>
+          <option value="text/plain">text/plain</option>
+          <option value="application/javascript">application/javascript</option>
+        </select>
+      </div>
+
+      <textarea name="body-raw" x-model="body.raw" x-show="body.mode === 'raw'" spellcheck="false" rows="12"
+                placeholder="Request payload"
+                class="w-full resize-y rounded-md border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs leading-relaxed text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"></textarea>
+
+      <div x-show="body.mode === 'form-urlencoded' || body.mode === 'multipart-form'">
+        {{- template "kvrows" (rows "form" "body.form" "Field") }}
+      </div>
+
+      <p x-show="body.mode === 'none'" class="text-xs text-zinc-500">This request is sent without a body.</p>
+    </div>
+
+    <div x-show="tab === 'auth'" class="max-w-xl space-y-3">
+      <select name="auth-type" x-model="auth.type"
+              class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+        <option value="none">No auth</option>
+        <option value="inherit">Inherit from collection</option>
+        <option value="bearer">Bearer token</option>
+        <option value="basic">Basic</option>
+        <option value="apikey">API key</option>
+      </select>
+
+      <div x-show="auth.type === 'bearer'">
+        <label class="mb-1 block text-xs text-zinc-500">Token</label>
+        <input type="text" name="auth-token" x-model="auth.token" spellcheck="false"
+               class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+      </div>
+
+      <div x-show="auth.type === 'basic'" class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="mb-1 block text-xs text-zinc-500">Username</label>
+          <input type="text" name="auth-username" x-model="auth.username" spellcheck="false"
+                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs text-zinc-500">Password</label>
+          <input type="password" name="auth-password" x-model="auth.password"
+                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div x-show="auth.type === 'apikey'" class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="mb-1 block text-xs text-zinc-500">Key</label>
+          <input type="text" name="auth-key" x-model="auth.key" spellcheck="false"
+                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs text-zinc-500">Value</label>
+          <input type="text" name="auth-value" x-model="auth.value" spellcheck="false"
+                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs text-zinc-500">Add to</label>
+          <select name="auth-in" x-model="auth.in"
+                  class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+            <option value="header">Header</option>
+            <option value="query">Query</option>
+          </select>
+        </div>
+      </div>
+
+      <p x-show="auth.type === 'inherit'" class="text-xs text-zinc-500">
+        Collection-level auth is not applied yet; set it explicitly for now.
+      </p>
+    </div>
+  </div>
+</form>
+{{- end -}}
+
+
+{{- define "kvrows" -}}
+<div class="space-y-1.5">
+  <template x-for="(row, i) in {{ .Model }}" :key="i">
+    <div class="flex items-center gap-2">
+      <input type="hidden" name="{{ .Prefix }}-on" :value="row.enabled ? '1' : '0'">
+      <input type="checkbox" x-model="row.enabled" :title="row.enabled ? 'Enabled' : 'Disabled'"
+             class="size-3.5 shrink-0 rounded border-zinc-600 bg-zinc-900 accent-sky-500">
+      <input type="text" name="{{ .Prefix }}-key" x-model="row.key" spellcheck="false" placeholder="{{ .Label }}"
+             class="w-1/3 min-w-0 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
+             :class="!row.enabled && 'opacity-50'">
+      <input type="text" name="{{ .Prefix }}-value" x-model="row.value" spellcheck="false" placeholder="Value"
+             class="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
+             :class="!row.enabled && 'opacity-50'">
+      <button type="button" @click="{{ .Model }}.splice(i, 1)" title="Remove"
+              class="shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300">
+        <svg class="size-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M3 3l8 8M11 3l-8 8"/>
+        </svg>
+      </button>
+    </div>
+  </template>
+  <button type="button" @click="{{ .Model }}.push({ key: '', value: '', enabled: true })"
+          class="rounded px-2 py-1 text-xs text-sky-400 hover:bg-zinc-800">+ Add</button>
+</div>
+{{- end -}}

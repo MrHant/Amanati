@@ -1,0 +1,132 @@
+version: '3'
+
+vars:
+  BINARY: Amanati
+  BIN_DIR: build/bin
+
+tasks:
+  default:
+    desc: List the available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # --- app ------------------------------------------------------------------
+
+  dev:
+    desc: Run the app with hot reload
+    cmds:
+      - wails dev
+
+  build:
+    desc: Build the desktop app into build/bin
+    cmds:
+      - wails build -clean
+
+  run:
+    desc: Build the app and launch it
+    deps: [build]
+    cmds:
+      - '{{.BIN_DIR}}/{{.BINARY}}{{exeExt}}'
+
+  # --- checks ---------------------------------------------------------------
+
+  check:
+    desc: Run everything CI would (format check, vet, tests)
+    cmds:
+      - task: fmt:check
+      - task: vet
+      - task: test
+
+  test:
+    desc: Run the Go tests
+    cmds:
+      - go test ./...
+
+  test:cover:
+    desc: Run the tests and open the coverage report
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format the Go sources
+    cmds:
+      - gofmt -w .
+
+  fmt:check:
+    desc: Fail if any Go source needs formatting
+    cmds:
+      - |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "these files need gofmt:"
+          echo "$unformatted"
+          exit 1
+        fi
+
+  tidy:
+    desc: Tidy go.mod and go.sum
+    cmds:
+      - go mod tidy
+
+  # --- frontend -------------------------------------------------------------
+  # wails runs these itself via wails.json; they are here for working on the
+  # UI without rebuilding the Go side.
+
+  frontend:install:
+    desc: Install the frontend dependencies
+    dir: frontend
+    cmds:
+      - npm install
+    sources:
+      - package.json
+    generates:
+      - node_modules/.package-lock.json
+
+  frontend:build:
+    desc: Copy the shell and compile Tailwind into frontend/dist
+    deps: [frontend:install]
+    dir: frontend
+    cmds:
+      - npm run build
+    sources:
+      - src/**/*
+      - build.mjs
+      - ../internal/ui/templates/**/*
+    generates:
+      - dist/**/*
+
+  frontend:watch:
+    desc: Rebuild the stylesheet on change
+    deps: [frontend:install]
+    dir: frontend
+    cmds:
+      - npm run watch
+
+  # --- housekeeping ---------------------------------------------------------
+
+  clean:
+    desc: Remove build output and the compiled frontend
+    cmds:
+      # A suppressed error still leaves $? false, so exit explicitly: removing
+      # something that was never built is not a failure.
+      - cmd: powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue '{{.BIN_DIR}}', 'frontend/dist', 'coverage.out'; exit 0"
+        platforms: [windows]
+      - cmd: rm -rf {{.BIN_DIR}} frontend/dist coverage.out
+        platforms: [linux, darwin]
+
+  doctor:
+    desc: Check that the Wails build environment is complete
+    cmds:
+      - wails doctor
+
+  tools:
+    desc: Install the Wails CLI at the version this project builds against
+    cmds:
+      - go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2

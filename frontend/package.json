@@ -1,0 +1,17 @@
+{
+  "name": "amanati-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs && tailwindcss -i ./src/input.css -o ./dist/assets/app.css --minify",
+    "watch": "node build.mjs && tailwindcss -i ./src/input.css -o ./dist/assets/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "tailwindcss": "^4.1.11"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.9",
+    "htmx.org": "^2.0.6"
+  }
+}

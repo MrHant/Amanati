@@ -1,0 +1,113 @@
+{
+	"info": {
+		"_postman_id": "24b25908-a7b8-4be6-a787-ccdaaa88e42f",
+		"name": "httpbinio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "ip",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://httpbin.io/ip",
+					"protocol": "https",
+					"host": [
+						"httpbin",
+						"io"
+					],
+					"path": [
+						"ip"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "html",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://httpbin.io/html",
+					"protocol": "https",
+					"host": [
+						"httpbin",
+						"io"
+					],
+					"path": [
+						"html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "json",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://httpbin.io/json",
+					"protocol": "https",
+					"host": [
+						"httpbin",
+						"io"
+					],
+					"path": [
+						"json"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "anython",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "auth token",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "h1",
+						"value": "hv1",
+						"type": "text"
+					},
+					{
+						"key": "h2",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://httpbin.io/anything/here?q1=qv1",
+					"protocol": "https",
+					"host": [
+						"httpbin",
+						"io"
+					],
+					"path": [
+						"anything",
+						"here"
+					],
+					"query": [
+						{
+							"key": "q1",
+							"value": "qv1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
