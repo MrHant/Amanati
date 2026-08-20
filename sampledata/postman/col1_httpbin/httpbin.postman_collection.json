@@ -1,0 +1,317 @@
+{
+	"info": {
+		"_postman_id": "24b25908-a7b8-4be6-a787-ccdaaa88e42f",
+		"name": "httpbin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Diff rseponse formats",
+			"item": [
+				{
+					"name": "html",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/html",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"html"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/json",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"json"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "image jpeg",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"accept": true,
+							"user-agent": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/image/jpeg",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"image",
+								"jpeg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "image png",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"accept": true,
+							"user-agent": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/image/png",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"image",
+								"png"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "image svg",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"accept": true,
+							"user-agent": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/image/svg",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"image",
+								"svg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "image webp",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"accept": true,
+							"user-agent": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/image/webp",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"image",
+								"webp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "binary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/bytes/128",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"bytes",
+								"128"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cookies",
+			"item": [
+				{
+					"name": "Add Cookie",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/cookies/set?k1=v1&k2=v2",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"cookies",
+								"set"
+							],
+							"query": [
+								{
+									"key": "k1",
+									"value": "v1"
+								},
+								{
+									"key": "k2",
+									"value": "v2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cookies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/cookies",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"cookies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Cookie",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{urlvar}}/cookies/delete?k1=&k2=",
+							"host": [
+								"{{urlvar}}"
+							],
+							"path": [
+								"cookies",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "k1",
+									"value": ""
+								},
+								{
+									"key": "k2",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "anything",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "auth token",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "h1",
+						"value": "hv1",
+						"type": "text"
+					},
+					{
+						"key": "h2",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{urlvar}}/anything/:pathparam?q1=qv1",
+					"host": [
+						"{{urlvar}}"
+					],
+					"path": [
+						"anything",
+						":pathparam"
+					],
+					"query": [
+						{
+							"key": "q1",
+							"value": "qv1"
+						}
+					],
+					"variable": [
+						{
+							"key": "pathparam",
+							"value": "pathparamvavlue"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "urlvar",
+			"value": "https://httpbin.io"
+		}
+	]
+}
