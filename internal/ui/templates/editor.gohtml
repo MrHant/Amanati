@@ -10,14 +10,13 @@
   <input type="hidden" name="collection-id" :value="collectionId">
   <input type="hidden" name="request-id" :value="requestId">
 
-  <header class="flex items-center gap-3 border-b border-zinc-800 px-4 py-2.5">
-    <h2 class="min-w-0 flex-1 truncate text-sm font-medium text-zinc-200" x-text="name"></h2>
+  <header class="flex items-center gap-3 border-b border-base-300 px-4 py-2.5">
+    <h2 class="min-w-0 flex-1 truncate text-sm font-medium" x-text="name"></h2>
     <template x-if="collectionName">
-      <span class="shrink-0 text-xs text-zinc-500" x-text="collectionName"></span>
+      <span class="shrink-0 text-xs text-base-content/70" x-text="collectionName"></span>
     </template>
     <template x-if="envs.length">
-      <select name="env" x-model="env"
-              class="shrink-0 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-300 focus:border-sky-500 focus:outline-none">
+      <select name="env" x-model="env" class="select select-xs w-auto shrink-0">
         <template x-for="option in envs" :key="option">
           <option :value="option" x-text="option"></option>
         </template>
@@ -26,8 +25,7 @@
   </header>
 
   <div class="flex items-center gap-2 px-4 py-3">
-    <select name="method" x-model="method"
-            class="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm font-semibold text-zinc-200 focus:border-sky-500 focus:outline-none">
+    <select name="method" x-model="method" class="select select-sm w-auto font-semibold">
       <template x-for="verb in methods" :key="verb">
         <option :value="verb" x-text="verb"></option>
       </template>
@@ -35,10 +33,9 @@
 
     <input type="text" name="url" x-model="url" spellcheck="false"
            placeholder="https://api.example.com/users  or  {{ "{{baseUrl}}" }}/users"
-           class="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none">
+           class="input input-sm min-w-0 flex-1 font-mono">
 
-    <button type="submit" id="send-button"
-            class="flex shrink-0 items-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-60">
+    <button type="submit" id="send-button" class="btn btn-sm btn-primary shrink-0">
       <svg id="send-indicator" class="htmx-indicator size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" stroke-opacity="0.3"/>
         <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
@@ -47,13 +44,13 @@
     </button>
   </div>
 
-  <nav class="flex gap-1 border-b border-zinc-800 px-4">
+  <nav role="tablist" class="tabs tabs-border px-4">
     <template x-for="item in tabs" :key="item.id">
-      <button type="button" @click="tab = item.id"
-              class="relative -mb-px border-b-2 px-3 py-2 text-xs font-medium"
-              :class="tab === item.id ? 'border-sky-500 text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-300'">
+      <button type="button" role="tab" @click="tab = item.id"
+              class="tab gap-1.5 text-xs font-medium"
+              :class="tab === item.id && 'tab-active'">
         <span x-text="item.label"></span>
-        <span x-show="count(item.id)" class="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400" x-text="count(item.id)"></span>
+        <span x-show="count(item.id)" class="badge badge-xs badge-neutral badge-soft" x-text="count(item.id)"></span>
       </button>
     </template>
   </nav>
@@ -69,15 +66,13 @@
 
     <div x-show="tab === 'body'" class="space-y-3">
       <div class="flex items-center gap-2">
-        <select name="body-mode" x-model="body.mode"
-                class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+        <select name="body-mode" x-model="body.mode" class="select select-xs w-auto">
           <option value="none">No body</option>
           <option value="raw">Raw</option>
           <option value="form-urlencoded">Form URL encoded</option>
           <option value="multipart-form">Multipart form</option>
         </select>
-        <select name="body-type" x-model="body.type" x-show="body.mode === 'raw'"
-                class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+        <select name="body-type" x-model="body.type" x-show="body.mode === 'raw'" class="select select-xs w-auto">
           <option value="application/json">application/json</option>
           <option value="application/xml">application/xml</option>
           <option value="text/plain">text/plain</option>
@@ -87,18 +82,17 @@
 
       <textarea name="body-raw" x-model="body.raw" x-show="body.mode === 'raw'" spellcheck="false" rows="12"
                 placeholder="Request payload"
-                class="w-full resize-y rounded-md border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs leading-relaxed text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"></textarea>
+                class="textarea w-full resize-y font-mono text-xs leading-relaxed"></textarea>
 
       <div x-show="body.mode === 'form-urlencoded' || body.mode === 'multipart-form'">
         {{- template "kvrows" (rows "form" "body.form" "Field") }}
       </div>
 
-      <p x-show="body.mode === 'none'" class="text-xs text-zinc-500">This request is sent without a body.</p>
+      <p x-show="body.mode === 'none'" class="text-xs text-base-content/70">This request is sent without a body.</p>
     </div>
 
     <div x-show="tab === 'auth'" class="max-w-xl space-y-3">
-      <select name="auth-type" x-model="auth.type"
-              class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+      <select name="auth-type" x-model="auth.type" class="select select-xs w-auto">
         <option value="none">No auth</option>
         <option value="inherit">Inherit from collection</option>
         <option value="bearer">Bearer token</option>
@@ -107,46 +101,45 @@
       </select>
 
       <div x-show="auth.type === 'bearer'">
-        <label class="mb-1 block text-xs text-zinc-500">Token</label>
+        <label class="mb-1 block text-xs text-base-content/70">Token</label>
         <input type="text" name="auth-token" x-model="auth.token" spellcheck="false"
-               class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+               class="input input-xs w-full font-mono">
       </div>
 
       <div x-show="auth.type === 'basic'" class="grid grid-cols-2 gap-3">
         <div>
-          <label class="mb-1 block text-xs text-zinc-500">Username</label>
+          <label class="mb-1 block text-xs text-base-content/70">Username</label>
           <input type="text" name="auth-username" x-model="auth.username" spellcheck="false"
-                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+                 class="input input-xs w-full font-mono">
         </div>
         <div>
-          <label class="mb-1 block text-xs text-zinc-500">Password</label>
+          <label class="mb-1 block text-xs text-base-content/70">Password</label>
           <input type="password" name="auth-password" x-model="auth.password"
-                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+                 class="input input-xs w-full font-mono">
         </div>
       </div>
 
       <div x-show="auth.type === 'apikey'" class="grid grid-cols-3 gap-3">
         <div>
-          <label class="mb-1 block text-xs text-zinc-500">Key</label>
+          <label class="mb-1 block text-xs text-base-content/70">Key</label>
           <input type="text" name="auth-key" x-model="auth.key" spellcheck="false"
-                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+                 class="input input-xs w-full font-mono">
         </div>
         <div>
-          <label class="mb-1 block text-xs text-zinc-500">Value</label>
+          <label class="mb-1 block text-xs text-base-content/70">Value</label>
           <input type="text" name="auth-value" x-model="auth.value" spellcheck="false"
-                 class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none">
+                 class="input input-xs w-full font-mono">
         </div>
         <div>
-          <label class="mb-1 block text-xs text-zinc-500">Add to</label>
-          <select name="auth-in" x-model="auth.in"
-                  class="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-200 focus:border-sky-500 focus:outline-none">
+          <label class="mb-1 block text-xs text-base-content/70">Add to</label>
+          <select name="auth-in" x-model="auth.in" class="select select-xs w-full">
             <option value="header">Header</option>
             <option value="query">Query</option>
           </select>
         </div>
       </div>
 
-      <p x-show="auth.type === 'inherit'" class="text-xs text-zinc-500">
+      <p x-show="auth.type === 'inherit'" class="text-xs text-base-content/70">
         Collection-level auth is not applied yet; set it explicitly for now.
       </p>
     </div>
@@ -161,15 +154,15 @@
     <div class="flex items-center gap-2">
       <input type="hidden" name="{{ .Prefix }}-on" :value="row.enabled ? '1' : '0'">
       <input type="checkbox" x-model="row.enabled" :title="row.enabled ? 'Enabled' : 'Disabled'"
-             class="size-3.5 shrink-0 rounded border-zinc-600 bg-zinc-900 accent-sky-500">
+             class="checkbox checkbox-xs checkbox-primary shrink-0">
       <input type="text" name="{{ .Prefix }}-key" x-model="row.key" spellcheck="false" placeholder="{{ .Label }}"
-             class="w-1/3 min-w-0 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
+             class="input input-xs w-1/3 min-w-0 font-mono"
              :class="!row.enabled && 'opacity-50'">
       <input type="text" name="{{ .Prefix }}-value" x-model="row.value" spellcheck="false" placeholder="Value"
-             class="min-w-0 flex-1 rounded border border-zinc-800 bg-zinc-900 px-2 py-1.5 font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
+             class="input input-xs min-w-0 flex-1 font-mono"
              :class="!row.enabled && 'opacity-50'">
       <button type="button" @click="{{ .Model }}.splice(i, 1)" title="Remove"
-              class="shrink-0 rounded p-1 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300">
+              class="btn btn-xs btn-ghost btn-square shrink-0">
         <svg class="size-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
           <path d="M3 3l8 8M11 3l-8 8"/>
         </svg>
@@ -177,6 +170,6 @@
     </div>
   </template>
   <button type="button" @click="{{ .Model }}.push({ key: '', value: '', enabled: true })"
-          class="rounded px-2 py-1 text-xs text-sky-400 hover:bg-zinc-800">+ Add</button>
+          class="btn btn-xs btn-ghost">+ Add</button>
 </div>
 {{- end -}}

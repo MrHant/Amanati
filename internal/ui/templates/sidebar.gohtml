@@ -1,24 +1,24 @@
 {{- define "sidebar.gohtml" -}}
 {{- if not .Collections -}}
-  <div class="px-4 py-10 text-center text-sm text-zinc-500">
-    <p class="mb-1 font-medium text-zinc-400">No collections open</p>
+  <div class="px-4 py-10 text-center text-sm text-base-content/70">
+    <p class="mb-1 font-medium text-base-content">No collections open</p>
     <p>Import a Postman file or open a Bruno folder to get started.</p>
   </div>
 {{- else -}}
   {{- range .Collections }}
-    <section class="border-b border-zinc-800/80" x-data="{ open: true }">
+    <section class="border-b border-base-300" x-data="{ open: true }">
       <header class="group flex items-center gap-1 px-2 py-2">
         <button type="button" @click="open = !open"
-                class="flex min-w-0 flex-1 items-center gap-1.5 rounded px-1 py-1 text-left hover:bg-zinc-800/60">
-          <svg class="size-3 shrink-0 text-zinc-500 transition-transform" :class="open && 'rotate-90'"
+                class="flex min-w-0 flex-1 items-center gap-1.5 rounded-field px-1 py-1 text-left hover:bg-base-300">
+          <svg class="size-3 shrink-0 text-base-content/70 transition-transform" :class="open && 'rotate-90'"
                viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
             <path d="M4 2l4 4-4 4z"/>
           </svg>
-          <span class="truncate text-sm font-medium text-zinc-200">{{ .Name }}</span>
-          <span class="shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-400">{{ .Format }}</span>
+          <span class="truncate text-sm font-medium">{{ .Name }}</span>
+          <span class="badge badge-xs badge-neutral shrink-0 uppercase tracking-wide">{{ .Format }}</span>
         </button>
         <button type="button" title="Close collection"
-                class="invisible shrink-0 rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 group-hover:visible"
+                class="btn btn-xs btn-ghost btn-square invisible shrink-0 group-hover:visible"
                 hx-post="/api/collections/{{ .ID }}/close"
                 hx-target="#sidebar" hx-swap="innerHTML">
           <svg class="size-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
@@ -40,14 +40,14 @@
   {{- range .Folders }}
     <li x-data="{ open: false }">
       <button type="button" @click="open = !open"
-              class="flex w-full items-center gap-1.5 rounded px-3 py-1.5 text-left text-sm text-zinc-300 hover:bg-zinc-800/60">
-        <svg class="size-3 shrink-0 text-zinc-500 transition-transform" :class="open && 'rotate-90'"
+              class="flex w-full items-center gap-1.5 rounded-field px-3 py-1.5 text-left text-sm hover:bg-base-300">
+        <svg class="size-3 shrink-0 text-base-content/70 transition-transform" :class="open && 'rotate-90'"
              viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
           <path d="M4 2l4 4-4 4z"/>
         </svg>
         <span class="truncate">{{ .Name }}</span>
       </button>
-      <div x-show="open" class="ml-3 border-l border-zinc-800 pl-1">
+      <div x-show="open" class="ml-3 border-l border-base-300 pl-1">
         {{- template "tree" . }}
       </div>
     </li>
@@ -55,12 +55,12 @@
   {{- range .Requests }}
     <li>
       <button type="button"
-              class="flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm text-zinc-300 hover:bg-zinc-800/60"
-              :class="$store.ui.active === '{{ .ID }}' && 'bg-sky-500/10 text-sky-200'"
+              class="flex w-full items-center gap-2 rounded-field px-3 py-1.5 text-left text-sm hover:bg-base-300"
+              :class="$store.ui.active === '{{ .ID }}' && 'bg-primary text-primary-content hover:bg-primary'"
               @click="$store.ui.active = '{{ .ID }}'"
               hx-get="/api/request/{{ .ID }}"
               hx-target="#editor-pane" hx-swap="innerHTML">
-        <span class="w-11 shrink-0 text-right text-[10px] font-semibold tracking-wide {{ methodTone .Method }}">{{ .Verb }}</span>
+        <span class="badge badge-xs w-12 shrink-0 font-semibold tracking-wide {{ methodTone .Method }}">{{ .Verb }}</span>
         <span class="truncate">{{ .Name }}</span>
       </button>
     </li>

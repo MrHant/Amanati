@@ -1,35 +1,58 @@
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" data-theme="nord">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Amanati</title>
   <link rel="stylesheet" href="/assets/app.css">
+  <script>
+    // Runs before the body is parsed so a dark-mode user never sees a flash of
+    // the light theme. The toggle in the title bar writes the same key back.
+    (() => {
+      const stored = localStorage.getItem('amanati:theme');
+      const dark = stored ? stored === 'forest' : matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'forest' : 'nord';
+    })();
+  </script>
   <script src="/assets/htmx.min.js"></script>
   <script defer src="/assets/alpine.min.js"></script>
 </head>
-<body class="h-full overflow-hidden bg-zinc-950 text-zinc-100 antialiased">
+<body class="h-full overflow-hidden bg-base-100 text-base-content antialiased">
 
   <div class="flex h-full flex-col">
 
     <!-- Title bar -->
-    <header class="flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-900/60 px-4 py-2">
-      <span class="text-sm font-semibold tracking-tight text-zinc-100">Amanati</span>
-      <span class="text-xs text-zinc-600">API client</span>
+    <header class="flex shrink-0 items-center gap-3 border-b border-base-300 bg-base-200 px-4 py-2">
+      <span class="text-sm font-semibold tracking-tight">Amanati</span>
+      <span class="text-xs text-base-content/70">API client</span>
 
       <div class="ml-auto flex items-center gap-2" x-data>
-        <button type="button" @click="importFile()"
-                class="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">
+        <button type="button" @click="importFile()" class="btn btn-xs btn-outline">
           Import Postman file…
         </button>
-        <button type="button" @click="importDirectory()"
-                class="rounded-md border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">
+        <button type="button" @click="importDirectory()" class="btn btn-xs btn-outline">
           Open Bruno folder…
         </button>
-        <button type="button"
-                class="rounded-md bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-zinc-700"
+        <button type="button" class="btn btn-xs btn-neutral"
                 hx-get="/api/blank" hx-target="#editor-pane" hx-swap="innerHTML">
           New request
+        </button>
+
+        <!-- The icons are swapped in CSS off <html data-theme>, not by
+             daisyUI's swap component: swap keys off :checked, which does not
+             restyle reliably here when toggled from script. -->
+        <button type="button" class="btn btn-xs btn-ghost btn-square" x-data="theme"
+                @click="dark = !dark; apply()"
+                :aria-pressed="dark" aria-label="Toggle dark theme"
+                :title="dark ? 'Switch to the light theme' : 'Switch to the dark theme'">
+          <svg class="theme-icon-light size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>
+          </svg>
+          <svg class="theme-icon-dark size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M21 13.2A9 9 0 1110.8 3a7 7 0 0010.2 10.2z"/>
+          </svg>
         </button>
       </div>
     </header>
@@ -37,7 +60,7 @@
     <div class="flex min-h-0 flex-1">
 
       <!-- Collections -->
-      <aside class="flex w-72 shrink-0 flex-col border-r border-zinc-800 bg-zinc-900/40">
+      <aside class="flex w-72 shrink-0 flex-col border-r border-base-300 bg-base-200">
         <div id="sidebar" class="min-h-0 flex-1 overflow-auto"
              hx-get="/api/sidebar" hx-trigger="load, collections:changed from:body"
              hx-swap="innerHTML"></div>
@@ -48,8 +71,8 @@
         <section id="editor-pane" class="min-h-0 flex-[3] overflow-hidden"
                  hx-get="/api/blank" hx-trigger="load" hx-swap="innerHTML"></section>
 
-        <section id="response-pane" class="min-h-0 flex-[2] overflow-hidden border-t border-zinc-800 bg-zinc-900/30">
-          <div class="flex h-full items-center justify-center text-xs text-zinc-600">
+        <section id="response-pane" class="min-h-0 flex-[2] overflow-hidden border-t border-base-300 bg-base-200/60">
+          <div class="flex h-full items-center justify-center text-xs text-base-content/70">
             Send a request to see the response
           </div>
         </section>
@@ -58,11 +81,10 @@
   </div>
 
   <!-- Toast -->
-  <div x-data="toast" x-show="message" x-transition
-       class="fixed bottom-4 right-4 max-w-sm rounded-md border px-3 py-2 text-xs shadow-lg"
-       :class="tone === 'error' ? 'border-rose-500/40 bg-rose-950 text-rose-200' : 'border-emerald-500/40 bg-emerald-950 text-emerald-200'"
-       style="display: none">
-    <span x-text="message"></span>
+  <div x-data="toast" x-show="message" x-transition class="toast toast-end" style="display: none">
+    <div class="alert max-w-sm text-xs" :class="tone === 'error' ? 'alert-error' : 'alert-success'">
+      <span x-text="message"></span>
+    </div>
   </div>
 
   <script>
@@ -100,6 +122,17 @@
 
     document.addEventListener('alpine:init', () => {
       Alpine.store('ui', { active: null });
+
+      // The head script has already picked a theme; this only mirrors it into
+      // Alpine and persists whatever the user chooses afterwards.
+      Alpine.data('theme', () => ({
+        dark: document.documentElement.dataset.theme === 'forest',
+        apply() {
+          const theme = this.dark ? 'forest' : 'nord';
+          document.documentElement.dataset.theme = theme;
+          localStorage.setItem('amanati:theme', theme);
+        },
+      }));
 
       Alpine.data('toast', () => ({
         message: '',

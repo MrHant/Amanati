@@ -45,19 +45,21 @@ func toJSON(v any) string {
 	return string(data)
 }
 
-// methodTone maps an HTTP verb to a colour token used by the stylesheet.
+// methodTone maps an HTTP verb to a daisyUI badge modifier. Solid badges are
+// deliberate: Nord's accent colours are pastel and only reach a readable
+// contrast against their own -content colour, not against base-100.
 func methodTone(method string) string {
 	switch strings.ToUpper(method) {
 	case "GET":
-		return "text-emerald-400"
+		return "badge-success"
 	case "POST":
-		return "text-amber-400"
+		return "badge-warning"
 	case "PUT", "PATCH":
-		return "text-sky-400"
+		return "badge-info"
 	case "DELETE":
-		return "text-rose-400"
+		return "badge-error"
 	default:
-		return "text-zinc-400"
+		return "badge-neutral"
 	}
 }
 

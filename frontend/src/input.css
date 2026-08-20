@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* daisyUI supplies the component classes and the semantic colour tokens
+   (base-100, primary, success, …). We ship two: Nord as the light default and
+   Forest as its dark counterpart. The title-bar toggle sets data-theme on
+   <html>; --prefersdark only decides the very first paint. */
+@plugin "daisyui" {
+  themes: nord --default, forest --prefersdark;
+}
+
 /* Tailwind v4 scans sources relative to this file. The markup lives in two
    places: the static shell here, and the Go fragment templates. */
 @source "./index.html";
@@ -7,7 +15,34 @@
 
 /* Method colours are chosen in Go (ui.methodTone), so the scanner never sees
    these class names in markup. Keep this in sync with that function. */
-@source inline("text-{emerald,amber,sky,rose,zinc}-400");
+@source inline("badge-{success,warning,info,error,neutral}");
+
+/* The title-bar toggle shows one icon per theme. Doing it here rather than
+   with x-show keeps it correct before Alpine boots, and survives Alpine
+   discarding an element's effects when it strips x-cloak. */
+[data-theme="forest"] .theme-icon-light,
+[data-theme="nord"] .theme-icon-dark {
+  display: none;
+}
+
+/* Forest ships --radius-field: 2rem, which turns the URL bar and every input
+   into a pill. Pin the geometry to Nord's so only the colours change when the
+   theme is toggled. */
+:root,
+[data-theme] {
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+}
+
+/* Nord is a light theme with a fairly dark base-content, so daisyUI's default
+   50% tints land under 4.5:1 against base-100. These rules are deliberately
+   unlayered: that outranks daisyUI's @layer components without !important. */
+.tabs > .tab:not(.tab-active) {
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+::placeholder {
+  color: color-mix(in oklab, currentcolor 60%, transparent);
+}
 
 @layer base {
   [x-cloak] {
@@ -30,13 +65,13 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-zinc-700);
+    background: var(--color-base-300);
     border: 3px solid transparent;
     border-radius: 9999px;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-zinc-600);
+    background: var(--color-neutral);
     background-clip: content-box;
   }
 
