@@ -1,0 +1,80 @@
+{
+	"info": {
+		"_postman_id": "1b8bf1ac-d42d-43b3-8d92-0ce0e14635bb",
+		"name": "httpbin-envs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "anything",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "auth token",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "h1",
+						"value": "hv1",
+						"type": "text"
+					},
+					{
+						"key": "h2",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{urlfromenv}}/anything/:pathparam?q1=qv1",
+					"host": [
+						"{{urlfromenv}}"
+					],
+					"path": [
+						"anything",
+						":pathparam"
+					],
+					"query": [
+						{
+							"key": "q1",
+							"value": "qv1"
+						}
+					],
+					"variable": [
+						{
+							"key": "pathparam",
+							"value": "pathparamvavlue"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
