@@ -17,6 +17,7 @@ var templates = template.Must(
 		"json":       toJSON,
 		"methodTone": methodTone,
 		"lower":      strings.ToLower,
+		"join":       strings.Join,
 		"rows":       newRowSpec,
 	}).ParseFS(templateFS, "templates/*.gohtml"),
 )

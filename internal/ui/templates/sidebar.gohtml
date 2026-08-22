@@ -17,6 +17,25 @@
           <span class="truncate text-sm font-medium">{{ .Name }}</span>
           <span class="badge badge-xs badge-neutral shrink-0 uppercase tracking-wide">{{ .Format }}</span>
         </button>
+        {{- if .AcceptsEnvFiles }}
+        {{/* Hidden until hover while the collection has no environments. */}}
+        <button type="button" @click="importEnvironment('{{ .ID }}')"
+                class="btn btn-xs btn-ghost shrink-0 gap-1 px-1.5 {{ if not .EnvNames }}invisible group-hover:visible{{ end }}"
+                {{ with .EnvNames -}}
+                  title="Environments: {{ join . ", " }} — click to import another"
+                  aria-label="{{ len . }} environments. Import another."
+                {{- else -}}
+                  title="Import an environment for this collection"
+                  aria-label="Import an environment"
+                {{- end }}>
+          <svg class="size-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor"
+               stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+            <path d="M7 1.6 12.6 4.8 7 8 1.4 4.8z"/>
+            <path d="M1.4 8.6 7 11.8 12.6 8.6"/>
+          </svg>
+          {{- with .EnvNames }}<span class="text-xs tabular-nums">{{ len . }}</span>{{ end }}
+        </button>
+        {{- end }}
         <button type="button" title="Close collection"
                 class="btn btn-xs btn-ghost btn-square invisible shrink-0 group-hover:visible"
                 hx-post="/api/collections/{{ .ID }}/close"

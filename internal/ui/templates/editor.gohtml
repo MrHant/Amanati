@@ -15,13 +15,20 @@
     <template x-if="collectionName">
       <span class="shrink-0 text-xs text-base-content/70" x-text="collectionName"></span>
     </template>
-    <template x-if="envs.length">
-      <select name="env" x-model="env" class="select select-xs w-auto shrink-0">
-        <template x-for="option in envs" :key="option">
-          <option :value="option" x-text="option"></option>
-        </template>
+    {{/* Server-rendered, not Alpine: htmx binds the change handler when the
+         fragment is swapped in, so the attribute has to be there already. */}}
+    {{- if .Envs }}
+      <select name="env" title="Environment used to resolve {{ "{{variables}}" }}"
+              class="select select-xs w-auto shrink-0"
+              hx-post="/api/collections/{{ .CollectionID }}/env"
+              hx-trigger="change" hx-swap="none"
+              hx-indicator="this" hx-disabled-elt="this">
+        <option value=""{{ if not .Env }} selected{{ end }}>No environment</option>
+        {{- range .Envs }}
+          <option value="{{ . }}"{{ if eq . $.Env }} selected{{ end }}>{{ . }}</option>
+        {{- end }}
       </select>
-    </template>
+    {{- end }}
   </header>
 
   <div class="flex items-center gap-2 px-4 py-3">

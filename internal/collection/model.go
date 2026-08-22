@@ -7,17 +7,27 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // Collection is one imported API collection, whatever its source format.
+//
+// Everything but the environment selection is fixed once the importer hands it
+// over. That selection changes while requests may be in flight, so it is
+// guarded by envMu and reached through methods.
 type Collection struct {
-	ID           string
-	Name         string
-	Format       string // importer ID, e.g. "postman" / "bruno"
-	Source       string // file or directory it was read from
-	Variables    []Variable
+	ID        string
+	Name      string
+	Format    string // importer ID, e.g. "postman" / "bruno"
+	Source    string // file or directory it was read from
+	Variables []Variable
+	Root      *Folder
+
+	// Set directly by the importer; afterwards go through PutEnvironment.
 	Environments []Environment
-	Root         *Folder
+
+	envMu     sync.RWMutex
+	activeEnv string
 
 	index map[string]*Request
 }
@@ -25,6 +35,7 @@ type Collection struct {
 // Environment is a named set of variables that overrides the collection ones.
 type Environment struct {
 	Name      string
+	Source    string // file it was read from, empty when inline
 	Variables []Variable
 }
 
@@ -119,6 +130,9 @@ func Finalize(c *Collection) *Collection {
 	if c.Name == "" {
 		c.Name = "Untitled collection"
 	}
+	if c.activeEnv == "" && len(c.Environments) > 0 {
+		c.activeEnv = c.Environments[0].Name
+	}
 	c.index = map[string]*Request{}
 	finalizeFolder(c, c.Root, "")
 	return c
@@ -147,7 +161,7 @@ func (c *Collection) Lookup(id string) *Request {
 }
 
 // Vars flattens collection variables plus the named environment (which wins)
-// into a resolver.
+// into a resolver. An env of "" resolves collection variables only.
 func (c *Collection) Vars(env string) Vars {
 	v := Vars{}
 	for _, item := range c.Variables {
@@ -155,8 +169,14 @@ func (c *Collection) Vars(env string) Vars {
 			v[item.Key] = item.Value
 		}
 	}
+	if env == "" {
+		return v
+	}
+
+	c.envMu.RLock()
+	defer c.envMu.RUnlock()
 	for _, e := range c.Environments {
-		if e.Name != env {
+		if !strings.EqualFold(e.Name, env) {
 			continue
 		}
 		for _, item := range e.Variables {
@@ -170,11 +190,56 @@ func (c *Collection) Vars(env string) Vars {
 
 // EnvNames lists the environments defined by the collection.
 func (c *Collection) EnvNames() []string {
+	c.envMu.RLock()
+	defer c.envMu.RUnlock()
 	names := make([]string, 0, len(c.Environments))
 	for _, e := range c.Environments {
 		names = append(names, e.Name)
 	}
 	return names
+}
+
+// ActiveEnv is the environment requests in this collection are sent with, or
+// "" for none.
+func (c *Collection) ActiveEnv() string {
+	c.envMu.RLock()
+	defer c.envMu.RUnlock()
+	return c.activeEnv
+}
+
+// SetEnv selects the active environment, reporting false and changing nothing
+// for a name the collection does not define. "" means no environment.
+func (c *Collection) SetEnv(name string) bool {
+	c.envMu.Lock()
+	defer c.envMu.Unlock()
+	if name == "" {
+		c.activeEnv = ""
+		return true
+	}
+	for _, e := range c.Environments {
+		if strings.EqualFold(e.Name, name) {
+			c.activeEnv = e.Name
+			return true
+		}
+	}
+	return false
+}
+
+// PutEnvironment adds an environment, replacing one of the same name so a
+// re-import updates in place. The first one to arrive becomes active.
+func (c *Collection) PutEnvironment(env Environment) {
+	c.envMu.Lock()
+	defer c.envMu.Unlock()
+	for i, existing := range c.Environments {
+		if strings.EqualFold(existing.Name, env.Name) {
+			c.Environments[i] = env
+			return
+		}
+	}
+	c.Environments = append(c.Environments, env)
+	if c.activeEnv == "" {
+		c.activeEnv = env.Name
+	}
 }
 
 // Vars resolves {{placeholders}}. Both Postman and Bruno use this syntax.

@@ -56,8 +56,8 @@ type editorVM struct {
 	Params         []rowVM  `json:"params"`
 	Body           bodyVM   `json:"body"`
 	Auth           authVM   `json:"auth"`
-	Envs           []string `json:"envs"`
-	Env            string   `json:"env"`
+	Envs           []string `json:"envs"` // environments of the owning collection
+	Env            string   `json:"env"`  // the one requests are sent with, "" for none
 }
 
 // blankEditor is the starting state for a new request. Every slice is non-nil
@@ -101,9 +101,7 @@ func editorFor(c *collection.Collection, r *collection.Request) editorVM {
 		vm.CollectionID = c.ID
 		vm.CollectionName = c.Name
 		vm.Envs = c.EnvNames()
-		if len(vm.Envs) > 0 {
-			vm.Env = vm.Envs[0]
-		}
+		vm.Env = c.ActiveEnv()
 	}
 	return vm
 }

@@ -26,6 +26,33 @@ type Importer interface {
 	Import(path string) (*Collection, error)
 }
 
+// EnvImporter is implemented by formats whose environments are exported as
+// files of their own, separate from the collection they belong to. Formats
+// that keep them inside the collection read them during Import instead.
+type EnvImporter interface {
+	Importer
+	// AcceptsEnv reports whether path looks like an environment of this
+	// format. Like Accepts it is run over every file next to an imported
+	// collection, so it must stay cheap and must not error on unrelated ones.
+	AcceptsEnv(path string) bool
+	// EnvPatterns lists file globs for the environment open dialog.
+	EnvPatterns() []string
+	// ImportEnv reads path into a single environment.
+	ImportEnv(path string) (Environment, error)
+}
+
+// EnvImporters returns the importers that can read a standalone environment
+// file.
+func EnvImporters() []EnvImporter {
+	out := []EnvImporter{}
+	for _, imp := range Importers() {
+		if env, ok := imp.(EnvImporter); ok {
+			out = append(out, env)
+		}
+	}
+	return out
+}
+
 // SourceKind tells the UI which native dialog to open for a format.
 type SourceKind int
 

@@ -57,6 +57,26 @@ func (a *App) ImportDirectory() Result {
 	return a.importPath(path)
 }
 
+// ImportEnvironment opens a picker for a standalone environment file and
+// attaches it to a collection.
+func (a *App) ImportEnvironment(collectionID string) Result {
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:   "Import environment",
+		Filters: envFilters(),
+	})
+	if err != nil {
+		return Result{Message: err.Error()}
+	}
+	if path == "" {
+		return Result{Message: ""} // dialog cancelled
+	}
+	c, name, err := a.store.ImportEnv(collectionID, path)
+	if err != nil {
+		return Result{Message: err.Error()}
+	}
+	return Result{OK: true, Message: name + " into " + c.Name}
+}
+
 func (a *App) importPath(path string) Result {
 	if path == "" {
 		return Result{Message: ""} // dialog cancelled
@@ -91,5 +111,27 @@ func fileFilters() []runtime.FileFilter {
 			Pattern:     strings.Join(all, ";"),
 		}}, filters...)
 	}
+	return withAllFiles(filters)
+}
+
+// envFilters does the same for the formats that keep environments in files of
+// their own.
+func envFilters() []runtime.FileFilter {
+	var filters []runtime.FileFilter
+
+	for _, imp := range collection.EnvImporters() {
+		patterns := imp.EnvPatterns()
+		if len(patterns) == 0 {
+			continue
+		}
+		filters = append(filters, runtime.FileFilter{
+			DisplayName: imp.Label() + " environment (" + strings.Join(patterns, " ") + ")",
+			Pattern:     strings.Join(patterns, ";"),
+		})
+	}
+	return withAllFiles(filters)
+}
+
+func withAllFiles(filters []runtime.FileFilter) []runtime.FileFilter {
 	return append(filters, runtime.FileFilter{DisplayName: "All files (*.*)", Pattern: "*.*"})
 }

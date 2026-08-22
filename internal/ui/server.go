@@ -39,6 +39,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/blank", s.handleBlank)
 	s.mux.HandleFunc("POST /api/send", s.handleSend)
 	s.mux.HandleFunc("POST /api/collections/{id}/close", s.handleClose)
+	s.mux.HandleFunc("POST /api/collections/{id}/env", s.handleSetEnv)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +54,16 @@ func (s *Server) handleSidebar(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleClose(w http.ResponseWriter, r *http.Request) {
 	s.store.Close(r.PathValue("id"))
 	s.render(w, "sidebar.gohtml", sidebarVM{Collections: s.store.List()})
+}
+
+// handleSetEnv records the environment picked for a collection. Nothing is
+// swapped back: the caller already shows the new selection.
+func (s *Server) handleSetEnv(w http.ResponseWriter, r *http.Request) {
+	if err := s.store.SetEnv(r.PathValue("id"), r.FormValue("env")); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handleBlank(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +87,14 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 
 	vars := collection.Vars{}
 	if c := s.store.Get(r.FormValue("collection-id")); c != nil {
-		vars = c.Vars(r.FormValue("env"))
+		// Prefer what the form shows, so a switch made just before Send cannot
+		// lose a race with its own update request. Only a form with no picker
+		// at all falls back.
+		env := c.ActiveEnv()
+		if _, ok := r.Form["env"]; ok {
+			env = r.FormValue("env")
+		}
+		vars = c.Vars(env)
 	}
 
 	out := httpclient.Request{

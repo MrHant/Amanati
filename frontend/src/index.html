@@ -96,27 +96,43 @@
       window.dispatchEvent(new CustomEvent('toast', { detail: { message, tone } }));
     }
 
-    async function runImport(binding) {
+    async function runImport(binding, ...args) {
       const app = window.go && window.go.main && window.go.main.App;
       if (!app) {
         notify('Native bindings are not ready yet.', 'error');
-        return;
+        return false;
       }
       try {
-        const result = await app[binding]();
+        const result = await app[binding](...args);
         if (result.ok) {
           htmx.trigger(document.body, 'collections:changed');
           notify('Imported ' + result.message, 'ok');
-        } else if (result.message) {
-          notify(result.message, 'error');
+          return true;
         }
+        if (result.message) notify(result.message, 'error');
       } catch (err) {
         notify(String(err), 'error');
       }
+      return false;
     }
 
     const importFile = () => runImport('ImportFile');
     const importDirectory = () => runImport('ImportDirectory');
+
+    async function importEnvironment(collectionId) {
+      if (await runImport('ImportEnvironment', collectionId)) {
+        reloadEditorFor(collectionId);
+      }
+    }
+
+    // The editor's environment picker is baked in at render time, so it has to
+    // be re-fetched for a new environment to appear in it.
+    function reloadEditorFor(collectionId) {
+      const owner = document.querySelector('#editor-pane input[name="collection-id"]');
+      const request = document.querySelector('#editor-pane input[name="request-id"]');
+      if (!owner || owner.value !== collectionId || !request || !request.value) return;
+      htmx.ajax('GET', '/api/request/' + request.value, { target: '#editor-pane', swap: 'innerHTML' });
+    }
 
     // --- Alpine components --------------------------------------------------
 
